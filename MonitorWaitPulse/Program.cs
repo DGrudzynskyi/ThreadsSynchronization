@@ -22,9 +22,12 @@ namespace MonitorWaitPulse
             routingCrewThread.IsBackground = true;
             routingCrewThread.Start();
 
+            Thread.Sleep(100);
+
             var loadingCrewThread = new Thread(LoadingCrew);
             loadingCrewThread.IsBackground = true;
             loadingCrewThread.Start();
+
 
             Console.ReadLine();
         }
@@ -34,24 +37,27 @@ namespace MonitorWaitPulse
             try
             {
                 Monitor.Enter(SyncBoat);
-                Console.WriteLine("entered lock by routing crew", SyncBoat.BoatId);
+                //Console.WriteLine("entered lock by routing crew", SyncBoat.BoatId);
                 for (int shippedBoats = 0; shippedBoats < 10; shippedBoats++)
                 {
                     while (SyncBoat.LoadingStatus != LoadingStatus.Loaded)
                     {
-                        Console.WriteLine("routing crew waits for boat status change");
-                        Monitor.Wait(SyncBoat, 2000);
+                        Console.WriteLine("routing crew: waits until boat is loaded");
+                        Monitor.Wait(SyncBoat, 8000);
                     }
 
-                    Console.WriteLine("letting boat {0} with {1} packages to leave the port", SyncBoat.BoatId, SyncBoat.PackagesLoaded);
-                    // simulate boat leaving the port and new boat landing
-                    Thread.Sleep(500);
+                    Console.WriteLine("routing crew: letting boat {0} with {1} packages to leave the port", SyncBoat.BoatId, SyncBoat.PackagesLoaded);
+                    // simulate boat leaving the port
+                    Thread.Sleep(1000);
+
+                    Console.WriteLine("routing crew: letting boat {0} to enter the port", SyncBoat.BoatId);
+                    // simulate new boat arrival
+                    Thread.Sleep(1000);
+
                     SyncBoat.Reset();
 
-                    Console.WriteLine("letting boat {0} packages to enter the port", SyncBoat.BoatId);
-
-                    //Monitor.Pulse(SyncBoat);
-                    //Console.WriteLine("routing crew pulsed", SyncBoat.BoatId);
+                    Monitor.PulseAll(SyncBoat);
+                    Console.WriteLine("routing crew: notify ready to receive new boat", SyncBoat.BoatId);
                 }
             }
             finally
@@ -65,30 +71,33 @@ namespace MonitorWaitPulse
             try
             {
                 Monitor.Enter(SyncBoat);
-                Console.WriteLine("entered lock by loading crew", SyncBoat.BoatId);
+                //Console.WriteLine("entered lock by loading crew", SyncBoat.BoatId);
                 while (true) { 
                     while (SyncBoat.LoadingStatus != LoadingStatus.ReadyForLoad)
                     {
-                        Console.WriteLine("loading crew waits for boat status change");
-                        Monitor.Wait(SyncBoat, 2000);
+                        Console.WriteLine("loading crew: waits until new boat arrives");
+                        Monitor.Wait(SyncBoat, 8000);
                     }
 
-                    Console.WriteLine("start loading boat {0}", SyncBoat.BoatId);
+                    Console.WriteLine("loading crew: start loading boat {0}", SyncBoat.BoatId);
+                    
+                    // simulate boat being loaded for some time
+                    // Thread.Sleep(1000);
 
                     var loadingTime = 0;
-                    while (loadingTime < 200)
+                    while (loadingTime < 2000)
                     {
-                        var packageLoadTime = Generator.Next(1, 10);
+                        var packageLoadTime = Generator.Next(10, 100);
                         Thread.Sleep(packageLoadTime);
 
                         loadingTime += packageLoadTime;
                         SyncBoat.PackagesLoaded++;
                     }
-                    Console.WriteLine("total {0} packages are loaded in boat {1}", SyncBoat.PackagesLoaded, SyncBoat.BoatId);
+                    Console.WriteLine("loading crew: total {0} packages are loaded in boat {1}", SyncBoat.PackagesLoaded, SyncBoat.BoatId);
                     SyncBoat.LoadingStatus = LoadingStatus.Loaded;
 
-                    //Monitor.Pulse(SyncBoat);
-                    //Console.WriteLine("loading crew pulsed", SyncBoat.BoatId);
+                    Console.WriteLine("loading crew: job's done", SyncBoat.BoatId);
+                    Monitor.PulseAll(SyncBoat);
                 }
             }
             finally
