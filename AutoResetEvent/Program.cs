@@ -11,15 +11,13 @@ namespace AutoResetEvent
 
     class Example
     {
-        private static AutoResetEvent event_1 = new AutoResetEvent(true);
+        private static AutoResetEvent event_1 = new AutoResetEvent(false);
         private static AutoResetEvent event_2 = new AutoResetEvent(false);
+        private static int finishedThreads = 0;
 
         static void Main()
         {
-            Console.WriteLine("Press Enter to create three threads and start them.\r\n" +
-                              "The threads wait on AutoResetEvent #1, which was created\r\n" +
-                              "in the signaled state, so the first thread is released.\r\n" +
-                              "This puts AutoResetEvent #1 into the unsignaled state.");
+            Console.WriteLine("Press Enter to create three threads and start them.\r\n");
             Console.ReadLine();
 
             for (int i = 1; i < 4; i++)
@@ -30,23 +28,28 @@ namespace AutoResetEvent
             }
             Thread.Sleep(250);
 
-            for (int i = 0; i < 2; i++)
+            while (finishedThreads < 3)
             {
-                Console.WriteLine("Press Enter to release another thread.");
-                Console.ReadLine();
-                event_1.Set();
-                Thread.Sleep(250);
+                Console.WriteLine("Enter 1 to turn WaitHandle 1 into signalled state. Enter 2 to turn WaitHandle 2 into signalled state.");
+                int eventNumber = 0;
+                var eventNumberEntered = int.TryParse(Console.ReadLine(), out eventNumber);
+
+                if (eventNumber == 1)
+                {
+                    event_1.Set();
+                    Thread.Sleep(250);
+                }
+                else if (eventNumber == 2)
+                {
+                    event_2.Set();
+                    Thread.Sleep(250);
+                }
+                else {
+                    Console.WriteLine("incorrect event number.");
+                }                
             }
 
-            Console.WriteLine("\r\nAll threads are now waiting on AutoResetEvent #2.");
-            for (int i = 0; i < 3; i++)
-            {
-                Console.WriteLine("Press Enter to release a thread.");
-                Console.ReadLine();
-                event_2.Set();
-                Thread.Sleep(250);
-            }
-
+            Console.WriteLine("job's done");
             Console.ReadLine();
         }
 
@@ -63,6 +66,7 @@ namespace AutoResetEvent
             Console.WriteLine("{0} is released from AutoResetEvent #2.", name);
 
             Console.WriteLine("{0} ends.", name);
+            finishedThreads++;
         }
     }
 
