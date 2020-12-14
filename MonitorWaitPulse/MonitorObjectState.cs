@@ -19,7 +19,7 @@ namespace MonitorWaitPulse
 
         public int BoatId { get; set; }
 
-        public void Reset() {
+        public void NewBoatIsAtTheDoor() {
             LoadingStatus = LoadingStatus.ReadyForLoad;
             PackagesLoaded = 0;
             BoatId++;

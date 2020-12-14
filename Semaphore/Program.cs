@@ -25,7 +25,7 @@ public class SemaphoreExample
                 Console.WriteLine("Task {0} enters the semaphore.", currentTaskId);
 
                 // this simulate some work
-                Thread.Sleep(100);
+                Thread.Sleep(200);
 
                 Console.WriteLine("Task {0} releases the semaphore; previous count: {1}.",
                                   currentTaskId, semaphore.Release());

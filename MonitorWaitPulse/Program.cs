@@ -19,17 +19,15 @@ namespace MonitorWaitPulse
             Generator = new Random();
 
             var routingCrewThread = new Thread(RoutingCrew);
-            routingCrewThread.IsBackground = true;
+            //routingCrewThread.IsBackground = true;
             routingCrewThread.Start();
 
             Thread.Sleep(100);
 
             var loadingCrewThread = new Thread(LoadingCrew);
-            loadingCrewThread.IsBackground = true;
+            //loadingCrewThread.IsBackground = true;
             loadingCrewThread.Start();
 
-
-            Console.ReadLine();
         }
 
         public static void RoutingCrew()
@@ -42,22 +40,24 @@ namespace MonitorWaitPulse
                 {
                     while (SyncBoat.LoadingStatus != LoadingStatus.Loaded)
                     {
-                        Console.WriteLine("routing crew: waits until boat is loaded");
-                        Monitor.Wait(SyncBoat, 8000);
+                        Log("routing crew: waits until boat is loaded");
+                        Monitor.Wait(SyncBoat, 10000);
                     }
 
-                    Console.WriteLine("routing crew: letting boat {0} with {1} packages to leave the port", SyncBoat.BoatId, SyncBoat.PackagesLoaded);
+                    Log("routing crew: letting boat {0} with {1} packages to leave the port", SyncBoat.BoatId, SyncBoat.PackagesLoaded);
                     // simulate boat leaving the port
                     Thread.Sleep(1000);
 
-                    Console.WriteLine("routing crew: letting boat {0} to enter the port", SyncBoat.BoatId);
+
+                    SyncBoat.NewBoatIsAtTheDoor();
+
+                    Log("routing crew: letting boat {0} to enter the port", SyncBoat.BoatId);
                     // simulate new boat arrival
                     Thread.Sleep(1000);
 
-                    SyncBoat.Reset();
-
                     Monitor.PulseAll(SyncBoat);
-                    Console.WriteLine("routing crew: notify ready to receive new boat", SyncBoat.BoatId);
+                    Console.WriteLine("Press enter to confirm boat arrived to port");
+                    Console.ReadLine();
                 }
             }
             finally
@@ -75,11 +75,11 @@ namespace MonitorWaitPulse
                 while (true) { 
                     while (SyncBoat.LoadingStatus != LoadingStatus.ReadyForLoad)
                     {
-                        Console.WriteLine("loading crew: waits until new boat arrives");
-                        Monitor.Wait(SyncBoat, 8000);
+                        Log("loading crew: waits until new boat arrives");
+                        Monitor.Wait(SyncBoat, 10000);
                     }
 
-                    Console.WriteLine("loading crew: start loading boat {0}", SyncBoat.BoatId);
+                    Log("loading crew: start loading boat {0}", SyncBoat.BoatId);
                     
                     // simulate boat being loaded for some time
                     // Thread.Sleep(1000);
@@ -93,17 +93,22 @@ namespace MonitorWaitPulse
                         loadingTime += packageLoadTime;
                         SyncBoat.PackagesLoaded++;
                     }
-                    Console.WriteLine("loading crew: total {0} packages are loaded in boat {1}", SyncBoat.PackagesLoaded, SyncBoat.BoatId);
+                    Log("loading crew: total {0} packages are loaded in boat {1}", SyncBoat.PackagesLoaded, SyncBoat.BoatId);
                     SyncBoat.LoadingStatus = LoadingStatus.Loaded;
 
-                    Console.WriteLine("loading crew: job's done", SyncBoat.BoatId);
                     Monitor.PulseAll(SyncBoat);
+                    Console.WriteLine("Press enter to confirm boat loading is over");
+                    Console.ReadLine();
                 }
             }
             finally
             {
                 Monitor.Exit(SyncBoat);
             }
+        }
+
+        private static void Log(string template, params object[] args) {
+            Console.WriteLine(String.Format("{0}:{1}: ", DateTime.Now.Minute, DateTime.Now.Second) + String.Format(template, args));
         }
     }
 }

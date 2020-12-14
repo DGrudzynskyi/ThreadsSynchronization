@@ -58,7 +58,8 @@ namespace AutoResetEvent
             string name = Thread.CurrentThread.Name;
 
             Console.WriteLine("{0} waits on AutoResetEvent #1.", name);
-            event_1.WaitOne();
+            event_1.WaitOne(); 
+
             Console.WriteLine("{0} is released from AutoResetEvent #1.", name);
 
             Console.WriteLine("{0} waits on AutoResetEvent #2.", name);
